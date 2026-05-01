@@ -1,6 +1,7 @@
 # Copyright (c) 2023 Braedon Hendy
 # This software is released under the GNU General Public License v3.0
 
+import os
 import tkinter as tk
 from tkinter import scrolledtext, ttk, filedialog
 import requests
@@ -441,13 +442,24 @@ def send_audio_to_server():
     global uploaded_file_path
     if editable_settings["Local Whisper"] == "True":
         print("Using Local Whisper for transcription.")
-        # model = WhisperModel(model_size, device="cuda", compute_type="float16")
-        # model = WhisperModel(model_size, device="cuda", compute_type="int8_float16")
+        # M2 Air optimized settings
         model = WhisperModel(editable_settings["Whisper Model"].strip(), device="cpu", compute_type="int8")
+        
         file_to_send = uploaded_file_path if uploaded_file_path else 'recording.wav'
         uploaded_file_path = None
-        segments, info = model.transcribe(file_to_send, beam_size=5)
-        print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
+        
+        # FIXED INDENTATION START
+        base_name = os.path.splitext(os.path.basename(file_to_send))[0]
+        output_filename = f"{base_name}_script.txt"
+        
+        segments, info = model.transcribe(file_to_send, beam_size=5, task="translate")
+        print(f"Detected language '{info.language}' with probability {info.language_probability}")
+        
+        with open(output_filename, "w") as f:
+            for segment in segments:
+                f.write(segment.text + "\n")
+        # FIXED INDENTATION END
+
         transcribed_text = "".join(segment.text for segment in segments)
         user_input.delete("1.0", tk.END)
         user_input.insert(tk.END, transcribed_text)
