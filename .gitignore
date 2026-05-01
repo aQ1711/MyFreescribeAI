@@ -1,0 +1,9 @@
+venv/
+models/
+.DS_Store
+*.bin
+*.pyc
+__pycache__/
+settings.txt
+aiscribe.txt
+aiscribe2.txt
