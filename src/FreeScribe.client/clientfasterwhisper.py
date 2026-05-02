@@ -452,17 +452,28 @@ def send_audio_to_server():
         base_name = os.path.splitext(os.path.basename(file_to_send))[0]
         output_filename = f"{base_name}_script.txt"
         
+       # Ensure the model is loaded
+        print(f"Processing: {file_to_send}")
         segments, info = model.transcribe(file_to_send, beam_size=5, task="translate")
         print(f"Detected language '{info.language}' with probability {info.language_probability}")
-        
-        with open(output_filename, "w") as f:
-            for segment in segments:
-                f.write(segment.text + "\n")
-        # FIXED INDENTATION END
 
-        transcribed_text = "".join(segment.text for segment in segments)
-        user_input.delete("1.0", tk.END)
-        user_input.insert(tk.END, transcribed_text)
+        # Force processing and capture segments
+        segment_list = list(segments) 
+        print(f"Transcription finished. Found {len(segment_list)} segments.")
+
+        # Only attempt to write if we actually have data
+        if segment_list:
+            with open(output_filename, "w", encoding="utf-8") as f:
+                for segment in segment_list:
+                    f.write(segment.text + "\n")
+            
+            transcribed_text = "".join(segment.text for segment in segment_list)
+            user_input.delete("1.0", tk.END)
+            user_input.insert(tk.END, transcribed_text)
+            print(f"Successfully wrote to {output_filename}")
+        else:
+            print("WARNING: No speech segments were detected. Is the audio file silent or corrupted?")
+
         send_and_receive()
     else:
         print("Using Remote Whisper for transcription.")
